@@ -19,13 +19,10 @@ namespace HabrProxy.Middlewares
 
         public async Task Invoke(HttpContext httpContext)
         {
-            if (httpContext.Request.Path.Value != null && !httpContext.Request.Path.Value.Contains(".")) 
+            // handling media requests to .svg content
+            if (httpContext.Request.Path.Value != null && httpContext.Request.Path.Value.Contains(".svg"))
             {
-                string path = string.Empty;
-                if (string.IsNullOrEmpty(httpContext.Request.Path.Value) || httpContext.Request.Path.Value == Routing.RedirectToPath)
-                    path = Routing.DefaultOriginalPath;
-                else path = httpContext.Request.Path.Value;
-                var sourceUrl = Routing.OriginalHost + path;
+                var sourceUrl = Constants.OriginalHost + httpContext.Request.Path.Value;
 
                 using (HttpClient client = new())
                 {
@@ -35,26 +32,50 @@ namespace HabrProxy.Middlewares
                         {
                             using (HttpContent content = response.Content)
                             {
-                                if (!PathKeeper.IsRedirected)
+                                string result = content.ReadAsStringAsync().Result;
+                                Supervisor.ImageContent = result;
+                            }
+                        }
+                    }
+                }
+                httpContext.Response.ContentType = Constants.ImageContentType;
+            }
+            // requests to load pages
+            else if (httpContext.Request.Path.Value != null && !httpContext.Request.Path.Value.Contains("."))
+            {
+                string path = string.Empty;
+                if (string.IsNullOrEmpty(httpContext.Request.Path.Value) || httpContext.Request.Path.Value == Constants.RedirectToPath)
+                    path = Constants.DefaultOriginalPath;
+                else path = httpContext.Request.Path.Value;
+                var sourceUrl = Constants.OriginalHost + path;
+
+                using (HttpClient client = new())
+                {
+                    using (HttpResponseMessage response = client.GetAsync(sourceUrl).Result)
+                    {
+                        if (response.IsSuccessStatusCode)
+                        {
+                            using (HttpContent content = response.Content)
+                            {
+                                if (!Supervisor.IsRedirected)
                                 {
                                     string result = content.ReadAsStringAsync().Result;
-                                    PathKeeper.OriginalContent = result;
+                                    Supervisor.OriginalContent = result;
                                 }
                             }
                         }
-                        else PathKeeper.OriginalContent = null;
-
+                        else Supervisor.OriginalContent = null;
                     }
                 }
 
-                if (path != Routing.DefaultOriginalPath)
+                if (path != Constants.DefaultOriginalPath)
                 {
-                    httpContext.Response.Redirect(Routing.RedirectToPath);
-                    PathKeeper.CurrentPath = path;
-                    PathKeeper.IsRedirected = true;
+                    httpContext.Response.Redirect(Constants.RedirectToPath);
+                    Supervisor.CurrentPath = path;
+                    Supervisor.IsRedirected = true;
                     return;
                 }
-                else PathKeeper.IsRedirected = false;
+                else Supervisor.IsRedirected = false;
             }
 
             await _next(httpContext);

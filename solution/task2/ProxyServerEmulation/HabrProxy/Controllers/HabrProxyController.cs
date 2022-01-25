@@ -8,8 +8,6 @@ namespace HabrProxy.Controllers
     [Route("/")]
     public class HabrProxyController : ControllerBase
     {
-        private const string NotFoundMessage = "Sorry, page is not found :(";
-
         private readonly IContentModifier _contentModifier;
 
         public HabrProxyController(IContentModifier contentModifier)
@@ -17,15 +15,31 @@ namespace HabrProxy.Controllers
             _contentModifier = contentModifier;
         }
 
-
+        /// <summary>
+        /// Load Habr.com pages
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public IActionResult Get()
         {
-            var modifiedContent = _contentModifier.Modify(PathKeeper.OriginalContent);
+            var modifiedContent = _contentModifier.Modify(Supervisor.OriginalContent);
             if (!string.IsNullOrEmpty(modifiedContent))
-                return Content(modifiedContent, Routing.OriginalContentType);
+                return Content(modifiedContent, Constants.OriginalContentType);
             else
-                return NotFound(NotFoundMessage);
+                return NotFound(Constants.NotFoundMessage);
+        }
+
+        /// <summary>
+        /// Get Media content to load .svg images
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("img/{name}")]
+        public IActionResult GetImage() 
+        {
+            if (!string.IsNullOrEmpty(Supervisor.ImageContent))
+                return Content(Supervisor.ImageContent, Constants.ImageContentType);
+            else
+                return Ok();
         }
     }
 }
