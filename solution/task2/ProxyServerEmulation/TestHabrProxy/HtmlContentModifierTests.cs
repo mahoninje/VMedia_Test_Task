@@ -30,6 +30,7 @@ namespace TestHabrProxy
         [InlineData("Привет", "Привет™")]
         [InlineData("Здравствуйте", "Здравствуйте")]
         [InlineData("1337", "1337")]
+        [InlineData("Helloo world", "Helloo™ world")]
         public void Modify_test_different_input_cases(string content, string expected) 
         {
             // arrange

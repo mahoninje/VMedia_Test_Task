@@ -34,8 +34,10 @@ namespace HabrProxy.Services
             var textHtmlBuilder = new StringBuilder();
             htmlBuilder.Append(html.DocumentNode.InnerHtml);
             htmlBuilder.Insert(0, " ");
+            htmlBuilder.Append(" ");
             textHtmlBuilder.Append(html.DocumentNode.InnerText);
             textHtmlBuilder.Insert(0, " ");
+            textHtmlBuilder.Append(" ");
 
             for (int i = 0; i < textHtmlBuilder.Length; i++) 
             {
@@ -68,6 +70,8 @@ namespace HabrProxy.Services
                     modifiedWords.Add(result);
                 }
             }
+            htmlBuilder.Remove(0, 1);
+            htmlBuilder.Remove(htmlBuilder.Length - 1, 1);
             return htmlBuilder.ToString();
         }
 
